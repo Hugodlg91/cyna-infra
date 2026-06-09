@@ -1,0 +1,15 @@
+# Terraform
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+
+# Ansible
+ansible/secrets.yml
+
+# SSH keys
+*.pem
+*.key
+
+# Terraform secrets
+*.tfvars
+*.tfvars.json
