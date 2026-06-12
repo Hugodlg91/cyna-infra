@@ -1,0 +1,107 @@
+---
+- name: Automatisation configuration OPNsense via API REST
+  hosts: network_devices
+  gather_facts: false
+  connection: local
+
+  vars:
+    opnsense_url: "https://{{ ansible_host }}"
+
+  tasks:
+
+    - name: Vérifier la connectivité à l'API OPNsense
+      ansible.builtin.uri:
+        url: "{{ opnsense_url }}/api/core/firmware/status"
+        method: GET
+        user: "{{ opnsense_api_key }}"
+        password: "{{ opnsense_api_secret }}"
+        force_basic_auth: yes
+        validate_certs: no
+        status_code: 200
+      register: api_check
+
+    - name: Afficher la version OPNsense
+      ansible.builtin.debug:
+        msg: "OPNsense connecté - API opérationnelle"
+      when: api_check.status == 200
+
+    - name: Configurer le DHCP LAN Genève (10.0.1.0/24)
+      ansible.builtin.uri:
+        url: "{{ opnsense_url }}/api/kea/dhcpv4/setSubnet/1"
+        method: POST
+        user: "{{ opnsense_api_key }}"
+        password: "{{ opnsense_api_secret }}"
+        force_basic_auth: yes
+        validate_certs: no
+        body_format: json
+        body:
+          subnet:
+            subnet: "10.0.1.0/24"
+            option_data:
+              - name: "domain-name-servers"
+                data: "10.0.2.10"
+              - name: "routers"
+                data: "10.0.1.254"
+              - name: "domain-name"
+                data: "cyna.local"
+            pools:
+              - pool: "10.0.1.100-10.0.1.200"
+        status_code: [200, 201]
+
+    - name: Configurer le DHCP Serveurs (10.0.2.0/24)
+      ansible.builtin.uri:
+        url: "{{ opnsense_url }}/api/kea/dhcpv4/setSubnet/2"
+        method: POST
+        user: "{{ opnsense_api_key }}"
+        password: "{{ opnsense_api_secret }}"
+        force_basic_auth: yes
+        validate_certs: no
+        body_format: json
+        body:
+          subnet:
+            subnet: "10.0.2.0/24"
+            option_data:
+              - name: "domain-name-servers"
+                data: "10.0.2.10"
+              - name: "routers"
+                data: "10.0.2.254"
+              - name: "domain-name"
+                data: "cyna.local"
+            pools:
+              - pool: "10.0.2.100-10.0.2.200"
+        status_code: [200, 201]
+
+    - name: Configurer le DHCP Paris (10.1.1.0/24)
+      ansible.builtin.uri:
+        url: "{{ opnsense_url }}/api/kea/dhcpv4/setSubnet/3"
+        method: POST
+        user: "{{ opnsense_api_key }}"
+        password: "{{ opnsense_api_secret }}"
+        force_basic_auth: yes
+        validate_certs: no
+        body_format: json
+        body:
+          subnet:
+            subnet: "10.1.1.0/24"
+            option_data:
+              - name: "domain-name-servers"
+                data: "10.0.2.10"
+              - name: "routers"
+                data: "10.1.1.254"
+              - name: "domain-name"
+                data: "cyna.local"
+            pools:
+              - pool: "10.1.1.100-10.1.1.200"
+        status_code: [200, 201]
+
+    - name: Appliquer la configuration Kea DHCP
+      ansible.builtin.uri:
+        url: "{{ opnsense_url }}/api/kea/service/reconfigure"
+        method: POST
+        user: "{{ opnsense_api_key }}"
+        password: "{{ opnsense_api_secret }}"
+        force_basic_auth: yes
+        validate_certs: no
+        body_format: json
+        body: {}
+        status_code: 200
