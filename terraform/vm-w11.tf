@@ -3,25 +3,25 @@ resource "proxmox_virtual_environment_vm" "clt_w11" {
   name      = "CLT-W11"
   vm_id     = 103
 
+  bios            = "ovmf"
+  machine         = "q35"
+  keyboard_layout = "fr"
+  on_boot         = true
+
   cpu {
-    cores = 2
-    type  = "x86-64-v2-AES"
+    cores   = 2
+    sockets = 1
+    type    = "x86-64-v2-AES"
   }
 
   memory {
-    dedicated = 4096
+    dedicated = 8192
   }
 
-  cdrom {
-    file_id   = "local:iso/windows11.iso"
-    interface = "ide0"
-  }
-
-  disk {
-    datastore_id = "local-lvm"
-    file_id      = "local:iso/virtio-win.iso"
-    interface    = "ide1"
-    size         = 8
+  efi_disk {
+    datastore_id      = "local-lvm"
+    type              = "4m"
+    pre_enrolled_keys = true
   }
 
   disk {
@@ -29,13 +29,20 @@ resource "proxmox_virtual_environment_vm" "clt_w11" {
     size         = 60
     interface    = "virtio0"
     discard      = "on"
+    aio          = "io_uring"
+  }
+
+  cdrom {
+    file_id   = "local:iso/virtio-win.iso"
+    interface = "ide1"
   }
 
   network_device {
-    bridge = "vmbr1"
-    model  = "virtio"
+    bridge      = "vmbr1"
+    model       = "virtio"
+    mac_address = "BC:24:11:D9:83:DD"
   }
 
-  boot_order = ["ide0", "virtio0"]
-  started    = false
+  boot_order = ["virtio0", "ide1"]
+  started    = true
 }

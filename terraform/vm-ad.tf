@@ -3,25 +3,18 @@ resource "proxmox_virtual_environment_vm" "srv_ad01" {
   name      = "SRV-AD01"
   vm_id     = 101
 
+  bios            = "seabios"
+  keyboard_layout = "fr"
+  on_boot         = true
+
   cpu {
-    cores = 4
-    type  = "x86-64-v2-AES"
+    cores   = 4
+    sockets = 1
+    type    = "x86-64-v2-AES"
   }
 
   memory {
-    dedicated = 4096
-  }
-
-  cdrom {
-    file_id   = "local:iso/windows-server-2022-eval.iso"
-    interface = "ide0"
-  }
-
-  disk {
-    datastore_id = "local-lvm"
-    file_id      = "local:iso/virtio-win.iso"
-    interface    = "ide1"
-    size         = 8
+    dedicated = 10528
   }
 
   disk {
@@ -29,13 +22,20 @@ resource "proxmox_virtual_environment_vm" "srv_ad01" {
     size         = 60
     interface    = "virtio0"
     discard      = "on"
+    aio          = "io_uring"
+  }
+
+  cdrom {
+    file_id   = "local:iso/virtio-win.iso"
+    interface = "ide1"
   }
 
   network_device {
-    bridge = "vmbr2"
-    model  = "virtio"
+    bridge      = "vmbr2"
+    model       = "virtio"
+    mac_address = "BC:24:11:19:1A:38"
   }
 
-  boot_order = ["ide0", "virtio0"]
-  started    = false
+  boot_order = ["virtio0", "ide1"]
+  started    = true
 }
